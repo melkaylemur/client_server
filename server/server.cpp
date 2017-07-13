@@ -1,6 +1,5 @@
 #include "server.h"
 
-#include <boost/asio.hpp>
 #include <boost/bind.hpp>
 
 server::server()
@@ -62,16 +61,41 @@ void server::handle_read(const boost::system::error_code& error, size_t read_byt
 	std::istream stream_reader ( &m_read_buf );
 	std::string local_data ( read_bytes, '\0' );
 	stream_reader.read ( &local_data[0], read_bytes );
-	m_current_input_string = local_data;	
-	std::cout << "Read OK size = " << read_bytes <<std::endl;  
-	read_async();
-	std::cout << m_current_input_string << std::endl;
-        std::cout << "Bytes: ";
-	for (int i = 0; i < m_current_input_string.size(); i++){
-	    std::cout << std::setw(2) << std::setfill('0') << std::hex << (int)(m_current_input_string[i]&0xff) << " " ;
-	}
-	std::cout << std::endl;
-	m_current_input_string = "";
+	m_current_input_string = local_data;
+	//std::cout << "Read OK size = " << read_bytes <<std::endl;
+	boost::smatch res;
+	boost::regex reg_file("FileName: *(.+?), FileSize: (\\w+), FileData: ");
+    	std::string name, fsize;
+        if(!(boost::regex_search(m_current_input_string, res, reg_file, boost::match_extra))){
+	    const char * c = m_current_input_string.c_str();
+	    outfile.write(c, m_current_input_string.size());
+	    length_file += m_current_input_string.size();
+	    std::cout << "Length = " << length_file <<std::endl;
+            std::cout << "Not format "<< std::endl;
+	    if (length_file == file_size){
+	    	outfile.close();
+	    }
+        }
+        else{
+	    name = res[1];
+            fsize = res[2];
+            file_size = boost::lexical_cast<std::size_t>(res[2]);
+	    outfile.open(name,std::ofstream::binary);
+	    length_file = 0;
+	    int header_length = 34 + name.size() + fsize.size();
+    	    std::string data_new;
+    	    for (int i = header_length; i < m_current_input_string.size(); i++){
+        	data_new += m_current_input_string[i];
+            }
+	    const char * c = data_new.c_str();
+	    outfile.write(c, data_new.size());
+	    length_file += data_new.size();
+	    std::cout << "Length = " << length_file <<std::endl;
+        }	
+	//while (length_file != file_size){
+	    m_current_input_string = "";
+	    read_async();
+	//}
     }
 }
 

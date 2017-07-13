@@ -2,9 +2,13 @@
 #define server_h__
 
 #include <string>
-
+#include <iostream>
+#include <fstream>
+#include <cstring>
+#include <boost/regex.hpp>
 #include <boost/asio.hpp>
 #include <boost/thread.hpp>
+#include <boost/lexical_cast.hpp>
 
 class server
 {
@@ -33,6 +37,9 @@ private:
     boost::thread m_io_service_thread;
     
     std::string m_current_input_string;
+    std::ofstream outfile;
+    int length_file;
+    size_t file_size;
 };
 
 
