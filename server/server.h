@@ -38,7 +38,10 @@ private:
     
     std::string m_current_input_string;
     std::ofstream outfile;
-    int length_file;
+    std::string name_file;
+    std::string data_new;
+    std::string fsize;
+    size_t length_file;
     size_t file_size;
 };
 

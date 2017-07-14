@@ -57,45 +57,43 @@ void server::handle_read(const boost::system::error_code& error, size_t read_byt
 {
     std::cout << " Read error = " << error.value() << std::endl;
     if (!error.value())
-    {   
-	std::istream stream_reader ( &m_read_buf );
-	std::string local_data ( read_bytes, '\0' );
-	stream_reader.read ( &local_data[0], read_bytes );
-	m_current_input_string = local_data;
-	//std::cout << "Read OK size = " << read_bytes <<std::endl;
-	boost::smatch res;
-	boost::regex reg_file("FileName: *(.+?), FileSize: (\\w+), FileData: ");
-    	std::string name, fsize;
+    {
+        std::istream stream_reader ( &m_read_buf );
+        std::string local_data ( read_bytes, '\0' );
+        stream_reader.read ( &local_data[0], read_bytes );
+        m_current_input_string = local_data;
+        boost::smatch res;
+        boost::regex reg_file("FileName: *(.+?), FileSize: (\\w+), FileData: ");
         if(!(boost::regex_search(m_current_input_string, res, reg_file, boost::match_extra))){
-	    const char * c = m_current_input_string.c_str();
-	    outfile.write(c, m_current_input_string.size());
-	    length_file += m_current_input_string.size();
-	    std::cout << "Length = " << length_file <<std::endl;
-            std::cout << "Not format "<< std::endl;
-	    if (length_file == file_size){
-	    	outfile.close();
-	    }
+            for (int i = 0; i < m_current_input_string.size(); i++){
+                data_new += m_current_input_string[i];
+            }
+            length_file += m_current_input_string.size();
+            std::cout << "Length = " << length_file << "file_size: " << file_size << std::endl;
         }
         else{
-	    name = res[1];
+            name_file = res[1];
             fsize = res[2];
-            file_size = boost::lexical_cast<std::size_t>(res[2]);
-	    outfile.open(name,std::ofstream::binary);
-	    length_file = 0;
-	    int header_length = 34 + name.size() + fsize.size();
-    	    std::string data_new;
-    	    for (int i = header_length; i < m_current_input_string.size(); i++){
-        	data_new += m_current_input_string[i];
+            file_size = boost::lexical_cast<size_t>(res[2]);
+            length_file = 0;
+            int header_length = 34 + name_file.size() + fsize.size();
+            for (int i = header_length; i < m_current_input_string.size(); i++){
+                data_new += m_current_input_string[i];
             }
-	    const char * c = data_new.c_str();
-	    outfile.write(c, data_new.size());
-	    length_file += data_new.size();
-	    std::cout << "Length = " << length_file <<std::endl;
-        }	
-	//while (length_file != file_size){
-	    m_current_input_string = "";
-	    read_async();
-	//}
+
+            length_file += data_new.size();
+            std::cout << "Length = " << length_file << "file_size: " << file_size << std::endl;
+        }
+        if (length_file == file_size){
+            std::cout << "Name: " << name_file << std::endl;
+            outfile.open(name_file,std::ofstream::binary);
+            const char * c = data_new.c_str();
+            outfile.write(c, data_new.size());
+            outfile.close();
+            data_new = "";
+        }
+        m_current_input_string = "";
+        read_async();
     }
 }
 
