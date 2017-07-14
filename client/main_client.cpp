@@ -11,7 +11,7 @@ int main(int argc, char **argv) {
     client_test cl;
     cl.configure("127.0.0.1", "8084");
     while (true){
-	    std::cout << "Input path to file: " << std::endl;
+	    std::cout << "Input name file: " << std::endl;
 	    std::string file_path;
 	    std::cin >> file_path;
 	    std::ifstream infile (file_path,std::ifstream::binary);
